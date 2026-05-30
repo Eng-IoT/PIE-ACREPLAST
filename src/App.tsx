@@ -38,6 +38,8 @@ import ProcedimentosNR10 from './pages/ProcedimentosNR10';
 import AreasClassificadas from './pages/AreasClassificadas';
 import InspecoesEletricas from './pages/InspecoesEletricas';
 import RelatorioTecnicoConsolidado from './pages/RelatorioTecnicoConsolidado';
+import DocumentosInteligentes from './pages/DocumentosInteligentes';
+import ValidacaoDocumento from './pages/ValidacaoDocumento';
 
 export default function App() {
   const { user, loading, role } = useAuth();
@@ -238,6 +240,8 @@ export default function App() {
                   <Route path="/areas-classificadas" element={<AreasClassificadas />} />
                   <Route path="/inspecoes-eletricas" element={<InspecoesEletricas />} />
                   <Route path="/relatorio-tecnico-consolidado" element={<RelatorioTecnicoConsolidado />} />
+                  <Route path="/documentos-inteligentes" element={<DocumentosInteligentes />} />
+                  <Route path="/validar-documento/:validationId" element={<ValidacaoDocumento />} />
                   <Route path="/dashboard" element={
                     <>
                       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">

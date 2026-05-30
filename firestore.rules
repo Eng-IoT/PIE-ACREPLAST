@@ -57,6 +57,17 @@ service cloud.firestore {
     match /electricalInspections/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /technicalReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
 
+    match /smartDocuments/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /smartTemplates/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /smartDocumentVersions/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /digitalSignatures/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /approvalFlows/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /auditLogs/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /qrValidationLinks/{doc=**} {
+      allow read: if isAuthenticated() || resource.data.isPublic == true;
+      allow write: if isAdmin();
+    }
+
     // Documento usado apenas para testar conexão do Firebase no app.
     match /connection/{doc=**} {
       allow read: if isAuthenticated();

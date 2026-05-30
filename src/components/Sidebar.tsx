@@ -1,6 +1,7 @@
 import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { LayoutDashboard, ShieldCheck, Building, FileText, FileCheck, BookOpenText, CheckSquare, ClipboardList, Users, Zap, FileDown, X, ShieldAlert, Wrench, FileCog, MapPinned, ClipboardCheck, FileBarChart2 } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, Building, FileText,
+  ScrollText, FileCheck, BookOpenText, CheckSquare, ClipboardList, Users, Zap, FileDown, X, ShieldAlert, Wrench, FileCog, MapPinned, ClipboardCheck, FileBarChart2 } from 'lucide-react';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -32,6 +33,7 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
         {role === 'admin' && <SideNavItem icon={<ShieldCheck size={18}/>} label="Admin" to="/admin" id="nav-admin" />}
         <SideNavItem icon={<Building size={18}/>} label="Dados do Cliente" to="/client-data" id="nav-client-data" />
         <SideNavItem icon={<BookOpenText size={18}/>} label="Documentos NR-10" to="/documentos-obrigatorios-nr10" id="nav-nr10-docs" />
+        <SideNavItem icon={<ScrollText size={18}/>} label="Documentos Inteligentes" to="/documentos-inteligentes" id="nav-smart-docs" />
         <SideNavItem icon={<FileCheck size={18}/>} label="Ensaios Elétricos" to="/laudos-ensaios-eletricos" id="nav-ensaios" />
         <SideNavItem icon={<ShieldAlert size={18}/>} label="Laudos NR-12" to="/laudos-nr12" id="nav-nr12" />
         <SideNavItem icon={<ClipboardCheck size={18}/>} label="Inspeções Elétricas" to="/inspecoes-eletricas" id="nav-inspecoes" />
