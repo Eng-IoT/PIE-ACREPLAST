@@ -1,0 +1,211 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+}
+
+:root {
+  --canvas: #020617;
+  --surface: #0f172a;
+  --surface-hover: rgba(34, 211, 238, 0.05);
+  --surface-active: rgba(34, 211, 238, 0.1);
+  --border: rgba(34, 211, 238, 0.1);
+  --border-strong: rgba(34, 211, 238, 0.25);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+}
+
+.theme-light {
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: rgba(249, 115, 22, 0.08);
+  --surface-active: rgba(249, 115, 22, 0.12);
+  --border: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(249, 115, 22, 0.45);
+  --text-primary: #111827;
+  --text-secondary: #1f2937;
+  --text-tertiary: #4b5563;
+}
+
+.high-contrast {
+  --canvas: #000000;
+  --surface: #000000;
+  --surface-hover: #000000;
+  --surface-active: #000000;
+  --border: #ffffff;
+  --border-strong: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #ffff00;
+  --text-tertiary: #ffff00;
+}
+
+@media print {
+  aside,
+  header {
+    display: none !important;
+  }
+}
+
+html {
+  min-height: 100%;
+  background: var(--canvas);
+}
+
+body {
+  min-height: 100%;
+  background: var(--canvas);
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (padding: max(0px)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ============================================================
+   Correção de contraste do modo claro
+   Evita textos claros/brancos em cartões e formulários claros.
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+}
+
+.theme-light {
+  color-scheme: light;
+}
+
+body {
+  color: var(--text-primary);
+}
+
+input,
+select,
+textarea,
+button {
+  color-scheme: inherit;
+}
+
+input,
+select,
+textarea {
+  color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+select option {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.theme-light .bg-surface,
+.theme-light .bg-surface\/80,
+.theme-light .bg-surface\/50,
+.theme-light .bg-surface-active,
+.theme-light .bg-surface-hover {
+  color: var(--text-primary);
+}
+
+.theme-light .text-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.theme-light .text-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.theme-light .text-text-tertiary,
+.theme-light .placeholder-text-tertiary::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* Cores de status ajustadas para leitura em fundo claro */
+.theme-light .text-cyan-100,
+.theme-light .text-cyan-300,
+.theme-light .text-cyan-400 {
+  color: #0e7490 !important;
+}
+
+.theme-light .text-blue-300,
+.theme-light .text-blue-400,
+.theme-light .text-blue-500 {
+  color: #1d4ed8 !important;
+}
+
+.theme-light .text-emerald-300,
+.theme-light .text-green-400,
+.theme-light .text-green-500 {
+  color: #047857 !important;
+}
+
+.theme-light .text-amber-300,
+.theme-light .text-amber-400,
+.theme-light .text-yellow-500 {
+  color: #b45309 !important;
+}
+
+.theme-light .text-red-300,
+.theme-light .text-red-400,
+.theme-light .text-red-500 {
+  color: #b91c1c !important;
+}
+
+.theme-light .text-orange-300,
+.theme-light .text-orange-400,
+.theme-light .text-orange-500,
+.theme-light .text-orange-500\/80,
+.theme-light .text-orange-500\/50 {
+  color: #ea580c !important;
+}
+
+/* Mantém botões primários com contraste alto no modo claro */
+.theme-light button[class*="bg-orange-600"],
+.theme-light button[class*="bg-cyan-600"],
+.theme-light label[class*="bg-orange-600"],
+.theme-light a[class*="bg-orange-600"] {
+  color: #ffffff !important;
+}
+
+.theme-light button[class*="bg-orange-600"] svg,
+.theme-light button[class*="bg-cyan-600"] svg,
+.theme-light label[class*="bg-orange-600"] svg,
+.theme-light a[class*="bg-orange-600"] svg {
+  color: #ffffff !important;
+}
+
+/* Remove brilho branco em textos no tema claro */
+.theme-light [class*="drop-shadow-[0_0_8px_rgba(255,255,255"] {
+  filter: none !important;
+}
+
+/* Melhor contraste para cartões coloridos em tema claro */
+.theme-light .bg-cyan-950\/20,
+.theme-light .bg-red-950\/10,
+.theme-light .bg-cyan-900\/30 {
+  background-color: rgba(14, 116, 144, 0.08) !important;
+}

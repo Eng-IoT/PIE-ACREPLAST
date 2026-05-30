@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="PIE ACREPLAST NR-10 — Prontuário de Instalações Elétricas com documentos, laudos, inspeções, plano de ação e evidências técnicas." />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PIE NR-10" />
+    <meta name="application-name" content="PIE ACREPLAST NR-10" />
+    <meta name="msapplication-TileColor" content="#020617" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <title>PIE ACREPLAST NR-10</title>
+    <script>
+      (function () {
+        try {
+          var savedTheme = localStorage.getItem('pie-theme');
+          if (savedTheme === 'light') {
+            document.documentElement.classList.add('theme-light');
+            var themeColor = document.querySelector('meta[name="theme-color"]');
+            if (themeColor) themeColor.setAttribute('content', '#f8fafc');
+          }
+        } catch (error) {
+          console.warn('Não foi possível aplicar o tema salvo antes do carregamento:', error);
+        }
+      })();
+    </script>
+    <style>
+      #pwa-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at top, rgba(249, 115, 22, 0.18), transparent 40%), #020617;
+        color: #e2e8f0;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        transition: opacity 240ms ease, visibility 240ms ease;
+      }
+      #pwa-splash.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #pwa-splash-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        padding: 28px;
+        text-align: center;
+      }
+      #pwa-splash-card img {
+        width: 104px;
+        height: 104px;
+        border-radius: 28px;
+        object-fit: cover;
+        box-shadow: 0 0 45px rgba(249, 115, 22, 0.24);
+      }
+      #pwa-splash-title {
+        margin: 0;
+        font-size: 1.1rem;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: #fb923c;
+      }
+      #pwa-splash-subtitle {
+        margin: 0;
+        color: #94a3b8;
+        font-size: .85rem;
+      }
+      #pwa-splash-loader {
+        width: 180px;
+        height: 4px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(148, 163, 184, .18);
+      }
+      #pwa-splash-loader::after {
+        content: "";
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #22d3ee, #f97316);
+        animation: pwa-loader 1.1s ease-in-out infinite;
+      }
+      @keyframes pwa-loader {
+        0% { transform: translateX(-105%); }
+        100% { transform: translateX(255%); }
+      }
+    </style>
+    <script>
+      window.addEventListener('unhandledrejection', function(event) {
+        const reasonStr = event.reason ? String(event.reason.message || event.reason) : '';
+        if (reasonStr.toLowerCase().includes('websocket') || reasonStr.toLowerCase().includes('vite')) {
+          event.preventDefault();
+          console.warn('Suprimida rejeição de desenvolvimento:', reasonStr);
+        }
+      });
+      window.addEventListener('error', function(event) {
+        const msgStr = event.message ? String(event.message) : '';
+        if (msgStr.toLowerCase().includes('websocket') || msgStr.toLowerCase().includes('vite')) {
+          event.preventDefault();
+          console.warn('Suprimido erro de desenvolvimento:', msgStr);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="pwa-splash" aria-label="Carregando PIE ACREPLAST NR-10">
+      <div id="pwa-splash-card">
+        <img src="/icons/icon-192.png" alt="PIE ACREPLAST NR-10" />
+        <div>
+          <h1 id="pwa-splash-title">PIE ACREPLAST NR-10</h1>
+          <p id="pwa-splash-subtitle">Prontuário Elétrico Digital</p>
+        </div>
+        <div id="pwa-splash-loader" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

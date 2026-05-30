@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "ClientData": {
+      "title": "ClientData",
+      "description": "Client company data",
+      "type": "object",
+      "properties": {
+        "razaoSocial": { "type": "string" },
+        "cnpj": { "type": "string" },
+        "endereco": { "type": "string" },
+        "cidade": { "type": "string" },
+        "responsavel": { "type": "string" },
+        "email": { "type": "string" }
+      }
+    },
+    "Document": {
+      "title": "Document",
+      "description": "Technician document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "ChecklistItem": {
+      "title": "ChecklistItem",
+      "description": "NR-10 compliance checklist item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "name", "status"]
+    },
+    "Worker": {
+      "title": "Worker",
+      "description": "Authorized worker",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" },
+        "certificateValidity": { "type": "string" }
+      },
+      "required": ["id", "name", "role", "status", "certificateValidity"]
+    }
+  },
+  "firestore": {
+    "/clientData": {
+      "schema": { "$ref": "#/entities/ClientData" },
+      "description": "Client company data"
+    },
+    "/documents": {
+      "schema": { "$ref": "#/entities/Document" },
+      "description": "Collection of documents"
+    },
+    "/checklistItems": {
+      "schema": { "$ref": "#/entities/ChecklistItem" },
+      "description": "Collection of checklist items"
+    },
+    "/workers": {
+      "schema": { "$ref": "#/entities/Worker" },
+      "description": "Collection of workers"
+    },
+    "/electrical-projects": {
+      "schema": { "$ref": "#/entities/Document" },
+      "description": "Collection of electrical projects and schematics"
+    },
+    "/trt-art": {
+      "schema": { "$ref": "#/entities/Document" },
+      "description": "Collection of TRT/ART documents"
+    }
+  }
+}

@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isBootstrapAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'jmm.engiot@gmail.com';
+    }
+
+    function hasAdminProfile() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || hasAdminProfile();
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidSelfProfile(userId) {
+      return isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && (
+          (isBootstrapAdmin() && request.resource.data.role == 'admin') ||
+          (!isBootstrapAdmin() && request.resource.data.role == 'reader')
+        );
+    }
+
+    // Leitura liberada para usuários autenticados. Escrita somente para administrador.
+    match /relatorios/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /documents/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /checklistItems/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /workers/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /trt-art/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /laudos/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /actionPlan/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /spdaReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /electrical-projects/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /settings/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /clientData/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+
+    match /electricalTestReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /nr12Reports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /nr10Documents/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /ppeTools/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /procedures/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /classifiedAreas/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /electricalInspections/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /technicalReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+
+    // Documento usado apenas para testar conexão do Firebase no app.
+    match /connection/{doc=**} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // Perfis de usuário.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isValidSelfProfile(userId) || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Subcoleções futuras do usuário, caso sejam usadas.
+    match /users/{userId}/{document=**} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "PIE Digital NR-10",
+  "description": "Prontuário digital exclusivo para gestão da conformidade NR-10, centralizando documentos técnicos, inspeções, planos de ação e controle de trabalhadores.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
