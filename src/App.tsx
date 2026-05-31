@@ -184,7 +184,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className={`flex min-h-screen bg-canvas text-text-primary font-sans selection:bg-orange-500/30`}>
+      <div className={`flex h-screen overflow-hidden bg-canvas text-text-primary font-sans selection:bg-orange-500/30`}>
         {/* Mobile Menu Overlay */}
         {isMobileMenuOpen && (
           <div 
@@ -198,7 +198,7 @@ export default function App() {
           setIsMobileMenuOpen={setIsMobileMenuOpen} 
         />
 
-        <main className="flex-1 flex flex-col min-w-0 relative">
+        <main className="flex-1 flex h-screen min-w-0 flex-col overflow-hidden relative">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
           <Navbar
             setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -220,7 +220,7 @@ export default function App() {
             saveEngineerName={saveEngineerName}
           />
 
-          <div className="flex-1 p-4 md:p-10 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-10 main-scrollbar">
             <AnimatePresence mode="wait">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}

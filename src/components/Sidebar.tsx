@@ -11,8 +11,10 @@ interface SidebarProps {
 export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps) {
   const { role } = useAuth();
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border flex flex-col transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 md:relative md:translate-x-0 md:w-72 overflow-x-hidden min-w-[240px]`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border flex h-screen flex-col transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 md:sticky md:top-0 md:translate-x-0 md:w-72 overflow-hidden min-w-[240px]`}>
       <div className="p-4 md:p-8 flex items-center justify-between gap-3 border-b border-border relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent opacity-50" />
         <div className="flex items-center gap-2 md:gap-3 relative z-10 min-w-0">
@@ -27,29 +29,29 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
           <X size={20} />
         </button>
       </div>
-      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto overflow-x-hidden w-full">
+      <nav className="flex-1 px-4 py-6 md:py-8 space-y-2 overflow-y-auto overflow-x-hidden overscroll-contain w-full sidebar-scrollbar">
         <div className="text-[10px] uppercase tracking-[0.2em] text-text-tertiary px-4 mb-4">Navegação</div>
-        <SideNavItem icon={<LayoutDashboard size={18}/>} label="Visão Geral" to="/dashboard" id="nav-dashboard" />
-        {role === 'admin' && <SideNavItem icon={<ShieldCheck size={18}/>} label="Admin" to="/admin" id="nav-admin" />}
-        <SideNavItem icon={<Building size={18}/>} label="Dados do Cliente" to="/client-data" id="nav-client-data" />
-        <SideNavItem icon={<BookOpenText size={18}/>} label="Documentos NR-10" to="/documentos-obrigatorios-nr10" id="nav-nr10-docs" />
-        <SideNavItem icon={<ScrollText size={18}/>} label="Documentos Inteligentes" to="/documentos-inteligentes" id="nav-smart-docs" />
-        <SideNavItem icon={<FileCheck size={18}/>} label="Ensaios Elétricos" to="/laudos-ensaios-eletricos" id="nav-ensaios" />
-        <SideNavItem icon={<ShieldAlert size={18}/>} label="Laudos NR-12" to="/laudos-nr12" id="nav-nr12" />
-        <SideNavItem icon={<ClipboardCheck size={18}/>} label="Inspeções Elétricas" to="/inspecoes-eletricas" id="nav-inspecoes" />
-        <SideNavItem icon={<Building size={18}/>} label="SPDA e Aterramento" to="/spda" id="nav-spda" />
-        <SideNavItem icon={<Wrench size={18}/>} label="EPI/EPC/Ferramental" to="/epi-epc-ferramental" id="nav-epi-epc" />
-        <SideNavItem icon={<FileCog size={18}/>} label="Procedimentos NR-10" to="/procedimentos-nr10" id="nav-procedimentos" />
-        <SideNavItem icon={<MapPinned size={18}/>} label="Áreas Classificadas" to="/areas-classificadas" id="nav-areas-classificadas" />
-        <SideNavItem icon={<Zap size={18}/>} label="Projetos Elétricos" to="/projects" id="nav-projects" />
-        <SideNavItem icon={<FileDown size={18}/>} label="TRT / ART" to="/trt-art" id="nav-trt-art" />
-        <SideNavItem icon={<Users size={18}/>} label="Trabalhadores" to="/workers" id="nav-workers" />
-        <SideNavItem icon={<CheckSquare size={18}/>} label="Checklist NR-10" to="/checklist" id="nav-checklist" />
-        <SideNavItem icon={<ClipboardList size={18}/>} label="Plano de Ação" to="/action-plan" id="nav-action-plan" />
-        <SideNavItem icon={<FileBarChart2 size={18}/>} label="Relatório Consolidado" to="/relatorio-tecnico-consolidado" id="nav-relatorio-consolidado" />
-        <SideNavItem icon={<FileText size={18}/>} label="Relatórios Técnicos" to="/relatorios" id="nav-relatorios" />
-        <SideNavItem icon={<FileCheck size={18}/>} label="Laudos Gerais" to="/laudos" id="nav-laudos" />
-        <SideNavItem icon={<BookOpenText size={18}/>} label="Prontuário Técnico" to="/documents" id="nav-documents" />
+        <SideNavItem icon={<LayoutDashboard size={18} />} label="Visão Geral" to="/dashboard" id="nav-dashboard" onNavigate={closeMobileMenu} />
+        {role === 'admin' && <SideNavItem icon={<ShieldCheck size={18} />} label="Admin" to="/admin" id="nav-admin" onNavigate={closeMobileMenu} />}
+        <SideNavItem icon={<Building size={18} />} label="Dados do Cliente" to="/client-data" id="nav-client-data" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<BookOpenText size={18} />} label="Documentos NR-10" to="/documentos-obrigatorios-nr10" id="nav-nr10-docs" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<ScrollText size={18} />} label="Documentos Inteligentes" to="/documentos-inteligentes" id="nav-smart-docs" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileCheck size={18} />} label="Ensaios Elétricos" to="/laudos-ensaios-eletricos" id="nav-ensaios" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<ShieldAlert size={18} />} label="Laudos NR-12" to="/laudos-nr12" id="nav-nr12" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<ClipboardCheck size={18} />} label="Inspeções Elétricas" to="/inspecoes-eletricas" id="nav-inspecoes" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<Building size={18} />} label="SPDA e Aterramento" to="/spda" id="nav-spda" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<Wrench size={18} />} label="EPI/EPC/Ferramental" to="/epi-epc-ferramental" id="nav-epi-epc" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileCog size={18} />} label="Procedimentos NR-10" to="/procedimentos-nr10" id="nav-procedimentos" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<MapPinned size={18} />} label="Áreas Classificadas" to="/areas-classificadas" id="nav-areas-classificadas" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<Zap size={18} />} label="Projetos Elétricos" to="/projects" id="nav-projects" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileDown size={18} />} label="TRT / ART" to="/trt-art" id="nav-trt-art" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<Users size={18} />} label="Trabalhadores" to="/workers" id="nav-workers" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<CheckSquare size={18} />} label="Checklist NR-10" to="/checklist" id="nav-checklist" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<ClipboardList size={18} />} label="Plano de Ação" to="/action-plan" id="nav-action-plan" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileBarChart2 size={18} />} label="Relatório Consolidado" to="/relatorio-tecnico-consolidado" id="nav-relatorio-consolidado" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileText size={18} />} label="Relatórios Técnicos" to="/relatorios" id="nav-relatorios" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<FileCheck size={18} />} label="Laudos Gerais" to="/laudos" id="nav-laudos" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<BookOpenText size={18} />} label="Prontuário Técnico" to="/documents" id="nav-documents" onNavigate={closeMobileMenu} />
       </nav>
     </aside>
   );
@@ -60,13 +62,21 @@ interface SideNavItemProps {
   label: string;
   to: string;
   id?: string;
+  onNavigate?: () => void;
 }
 
-function SideNavItem({ icon, label, to, id }: SideNavItemProps) {
+function SideNavItem({ icon, label, to, id, onNavigate }: SideNavItemProps) {
+  const handleClick = () => {
+    if (window.innerWidth < 768) {
+      onNavigate?.();
+    }
+  };
+
   return (
     <RouterNavLink 
       to={to} 
       id={id}
+      onClick={handleClick}
       className={({ isActive }) =>
         `w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-sm transition-all font-sans font-medium text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] border-l-2 ${
           isActive

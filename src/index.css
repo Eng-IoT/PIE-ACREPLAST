@@ -209,3 +209,33 @@ select option {
 .theme-light .bg-cyan-900\/30 {
   background-color: rgba(14, 116, 144, 0.08) !important;
 }
+
+/* ============================================================
+   Rolagem independente do menu e do conteúdo principal
+   ============================================================ */
+.sidebar-scrollbar,
+.main-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(249, 115, 22, 0.55) transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar,
+.main-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track,
+.main-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb,
+.main-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.45);
+  border-radius: 999px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+.main-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.75);
+}
