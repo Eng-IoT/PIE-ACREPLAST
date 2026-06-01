@@ -30,6 +30,7 @@ import { Worker, ActionPlanItem } from './types';
 import PendingAlerts from './components/PendingAlerts';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
+import AppFooter from './components/AppFooter';
 import LaudoEnsaiosEletricos from './pages/LaudoEnsaiosEletricos';
 import LaudosNR12 from './pages/LaudosNR12';
 import DocumentosObrigatoriosNR10 from './pages/DocumentosObrigatoriosNR10';
@@ -250,15 +251,17 @@ export default function App() {
           />
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-10 main-scrollbar">
-            <AnimatePresence mode="wait">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-6 md:space-y-10"
-              >
-                <Routes>
+            <div className="flex min-h-full flex-col gap-6 md:gap-10">
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6 md:space-y-10"
+                  >
+                    <Routes>
                   <Route path="/client-data" element={<Section title="Dados do Cliente"><DadosCliente /></Section>} />
                   <Route path="/admin" element={role === 'admin' ? <Section title="Admin"><AdminPanel /></Section> : <Navigate to="/dashboard" />} />
                   <Route path="/laudos-ensaios-eletricos" element={<LaudoEnsaiosEletricos />} />
@@ -327,9 +330,13 @@ export default function App() {
                   <Route path="/spda" element={<Section title="SPDA e Aterramento"><SpdaAterramento /></Section>} />
                   <Route path="/trt-art" element={<Section title="TRT / ART"><TrtArt /></Section>} />
                   <Route path="/" element={<Navigate to="/dashboard" />} />
-                </Routes>
-              </motion.div>
-            </AnimatePresence>
+                    </Routes>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <AppFooter />
+            </div>
           </div>
         </main>
       </div>

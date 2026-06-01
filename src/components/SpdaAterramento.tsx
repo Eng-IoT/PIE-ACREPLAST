@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Plus, Trash2, Calendar, FileText, Download, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { collection, onSnapshot, addDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType, storage, uploadWithRetry } from '../lib/firebase';
+import { Plus, Trash2, Calendar, FileText, Download, TrendingDown, TrendingUp, Minus, UploadCloud, FileCheck2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'motion/react';
+import { getDownloadURL, ref } from 'firebase/storage';
 
 type SpdaReport = {
   id: string;
@@ -13,6 +14,11 @@ type SpdaReport = {
   ohmicValue: number;
   status: 'valid' | 'expired' | 'attention';
   url: string;
+  fileName?: string;
+  filePath?: string;
+  createdAt?: unknown;
+  createdBy?: string | null;
+  createdByEmail?: string | null;
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -38,6 +44,9 @@ export default function SpdaAterramento() {
   const [newValidity, setNewValidity] = useState('');
   const [newResponsible, setNewResponsible] = useState('');
   const [newOhmic, setNewOhmic] = useState('');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'spdaReports'), (snapshot) => {
@@ -54,6 +63,9 @@ export default function SpdaAterramento() {
 
   const addReport = async () => {
     if (!newDate || !newValidity || !newResponsible || !newOhmic) return;
+
+    setSaving(true);
+    setFeedback('');
     
     // Calculate naive status based on date
     const today = new Date();
@@ -69,20 +81,42 @@ export default function SpdaAterramento() {
     }
 
     try {
+      let url = '';
+      let fileName = '';
+      let filePath = '';
+
+      if (newFile) {
+        fileName = newFile.name;
+        filePath = `spda-aterramento/relatorios-medicao/${Date.now()}_${newFile.name}`;
+        const storageRef = ref(storage, filePath);
+        await uploadWithRetry(storageRef, newFile);
+        url = await getDownloadURL(storageRef);
+      }
+
       await addDoc(collection(db, 'spdaReports'), {
         date: newDate,
         validity: newValidity,
         responsible: newResponsible,
         ohmicValue: parseFloat(newOhmic),
         status,
-        url: '#' // Placeholder
+        url,
+        fileName,
+        filePath,
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser?.uid || null,
+        createdByEmail: auth.currentUser?.email || null,
       });
       setNewDate('');
       setNewValidity('');
       setNewResponsible('');
       setNewOhmic('');
+      setNewFile(null);
+      setFeedback('Relatório de medição cadastrado com sucesso.');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'spdaReports');
+      setFeedback('Erro ao salvar. Verifique login, permissões do Storage e regras do Firebase.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -176,30 +210,59 @@ export default function SpdaAterramento() {
       )}
 
       {/* Add New */}
-      <div className="bg-surface-hover border border-border-strong rounded-xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end group focus-within:border-cyan-500/30 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.05)] transition-all duration-500">
-        <div className="relative">
-          <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Data Medição</label>
-          <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+      <div className="bg-surface-hover border border-border-strong rounded-xl p-4 group focus-within:border-cyan-500/30 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.05)] transition-all duration-500">
+        <div className="flex items-start gap-3 mb-4 pb-4 border-b border-border">
+          <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
+            <UploadCloud size={18} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-[0.12em]">Novo relatório de medição</h3>
+            <p className="text-xs text-text-tertiary mt-1">Cadastre a medição de aterramento/SPDA e anexe o relatório técnico em PDF, imagem ou documento.</p>
+          </div>
         </div>
-        <div className="relative">
-          <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Validade (1 Ano)</label>
-          <input type="date" value={newValidity} onChange={e => setNewValidity(e.target.value)} className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 items-end">
+          <div className="relative">
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Data Medição</label>
+            <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+          </div>
+          <div className="relative">
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Validade (1 Ano)</label>
+            <input type="date" value={newValidity} onChange={e => setNewValidity(e.target.value)} className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+          </div>
+          <div className="relative">
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Resp. Técnico</label>
+            <input type="text" value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="Engenheiro / Técnico" className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+          </div>
+          <div className="relative">
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Maior Resistência (Ω)</label>
+            <input type="number" step="0.1" value={newOhmic} onChange={e => setNewOhmic(e.target.value)} placeholder="Ex: 8.5" className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all font-mono" />
+          </div>
+          <div className="relative md:col-span-2 xl:col-span-1">
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Anexar relatório</label>
+            <label className="w-full h-10 bg-surface border border-border-strong rounded-lg px-3 text-xs text-text-secondary flex items-center gap-2 cursor-pointer hover:border-cyan-500/50 hover:bg-surface-active transition-all overflow-hidden">
+              <UploadCloud size={15} className="text-cyan-500 shrink-0" />
+              <span className="truncate">{newFile ? newFile.name : 'PDF, imagem ou DOCX'}</span>
+              <input
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                onChange={e => setNewFile(e.target.files?.[0] || null)}
+              />
+            </label>
+          </div>
         </div>
-        <div className="relative">
-          <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Resp. Técnico</label>
-          <input type="text" value={newResponsible} onChange={e => setNewResponsible(e.target.value)} placeholder="Engenheiro" className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4">
+          <button 
+            onClick={addReport}
+            disabled={!newDate || !newValidity || !newResponsible || !newOhmic || saving}
+            className="w-full sm:w-auto h-10 bg-cyan-600/90 hover:bg-cyan-500 border border-cyan-500/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)] text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-30 disabled:hover:shadow-none disabled:hover:bg-cyan-600/90 flex items-center justify-center gap-1 active:scale-95"
+          >
+            <Plus size={16} /> {saving ? 'Salvando...' : 'Adicionar relatório'}
+          </button>
+          {feedback && <p className="text-xs text-text-secondary">{feedback}</p>}
         </div>
-        <div className="relative">
-          <label className="block text-[10px] text-text-tertiary uppercase tracking-widest mb-1 group-focus-within:text-cyan-500/80 transition-colors">Maior Resistência (Ω)</label>
-          <input type="number" step="0.1" value={newOhmic} onChange={e => setNewOhmic(e.target.value)} placeholder="Ex: 8.5" className="w-full bg-surface border border-border-strong rounded-lg p-2 text-sm text-text-primary h-10 focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 outline-none transition-all font-mono" />
-        </div>
-        <button 
-          onClick={addReport}
-          disabled={!newDate || !newValidity || !newResponsible || !newOhmic}
-          className="w-full h-10 bg-cyan-600/90 hover:bg-cyan-500 border border-cyan-500/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)] text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-30 disabled:hover:shadow-none disabled:hover:bg-cyan-600/90 flex items-center justify-center gap-1 active:scale-95"
-        >
-          <Plus size={16} /> Adicionar
-        </button>
       </div>
 
       {loading ? (
@@ -226,7 +289,7 @@ export default function SpdaAterramento() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-sm text-text-primary group-hover:text-cyan-100 transition-colors">Laudo SPDA e Aterramento</h3>
+                    <h3 className="font-medium text-sm text-text-primary group-hover:text-cyan-500 transition-colors">Laudo SPDA e Aterramento</h3>
                     <span className={`px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold border transition-colors
                       ${report.status === 'valid' ? 'text-green-500 border-green-500/20 bg-green-500/10 group-hover:border-green-500/40' : 
                         report.status === 'attention' ? 'text-orange-500 border-orange-500/20 bg-orange-500/10 group-hover:border-orange-500/40' : 
@@ -235,10 +298,18 @@ export default function SpdaAterramento() {
                       {report.status === 'valid' ? 'Válido' : report.status === 'attention' ? 'Vence em breve' : 'Vencido'}
                     </span>
                   </div>
-                  <div className="text-xs text-text-tertiary mt-1 flex items-center gap-3">
+                  <div className="text-xs text-text-tertiary mt-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                     <span className="flex items-center gap-1"><Calendar size={12} /> Realizado: <span className="text-text-secondary">{new Date(report.date).toLocaleDateString('pt-BR')}</span></span>
                     <span className="flex items-center gap-1">Válido até: <span className="text-text-secondary">{new Date(report.validity).toLocaleDateString('pt-BR')}</span></span>
+                    {report.url ? (
+                      <span className="flex items-center gap-1 text-cyan-500"><FileCheck2 size={12} /> Relatório anexado</span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-orange-500"><FileText size={12} /> Sem anexo</span>
+                    )}
                   </div>
+                  {report.fileName && (
+                    <div className="text-[11px] text-text-tertiary mt-1 truncate max-w-md">Arquivo: <span className="text-text-secondary">{report.fileName}</span></div>
+                  )}
                 </div>
               </div>
               
@@ -252,9 +323,21 @@ export default function SpdaAterramento() {
                   <div className="text-sm text-text-secondary">{report.responsible}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 text-text-secondary hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors" title="Baixar Laudo">
-                    <Download size={16} />
-                  </button>
+                  {report.url ? (
+                    <a
+                      href={report.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 text-text-secondary hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                      title="Abrir ou baixar relatório de medição"
+                    >
+                      <Download size={16} />
+                    </a>
+                  ) : (
+                    <button className="p-2 text-text-tertiary opacity-40 cursor-not-allowed" title="Nenhum relatório anexado" disabled>
+                      <Download size={16} />
+                    </button>
+                  )}
                   <button onClick={() => deleteReport(report.id)} className="p-2 text-text-tertiary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20" title="Excluir">
                     <Trash2 size={16} />
                   </button>
