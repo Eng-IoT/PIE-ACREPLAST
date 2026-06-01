@@ -1,4 +1,5 @@
 import { Menu, Eye, Sun, Moon, Check, X, Edit2 } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 interface NavbarProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -93,7 +94,8 @@ export default function Navbar({
           <span className="text-[8px] md:text-[10px] text-text-tertiary uppercase tracking-[0.2em] md:tracking-[0.3em] truncate max-w-[200px] md:max-w-none">Prontuário Exclusivo do Cliente</span>
         </div>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 md:gap-6">
+        <NotificationBell />
         <button 
           id="navbar-high-contrast-btn"
           onClick={toggleHighContrast} 

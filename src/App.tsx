@@ -40,6 +40,9 @@ import InspecoesEletricas from './pages/InspecoesEletricas';
 import RelatorioTecnicoConsolidado from './pages/RelatorioTecnicoConsolidado';
 import DocumentosInteligentes from './pages/DocumentosInteligentes';
 import ValidacaoDocumento from './pages/ValidacaoDocumento';
+import AutomacaoInteligente from './pages/AutomacaoInteligente';
+import ModoFiscalizacao from './pages/ModoFiscalizacao';
+import FiscalizacaoPublica from './pages/FiscalizacaoPublica';
 
 export default function App() {
   const { user, loading, role } = useAuth();
@@ -73,6 +76,7 @@ export default function App() {
   });
 
   const workerIdMatch = new URLSearchParams(window.location.search).get('worker');
+  const publicPath = window.location.pathname;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -132,6 +136,31 @@ export default function App() {
         unsubDocuments();
     };
   }, [user]);
+
+  const isPublicFiscalPath = publicPath.startsWith('/fiscalizacao/');
+  const isPublicValidationPath = publicPath.startsWith('/validar-documento/');
+
+  if (isPublicFiscalPath) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/fiscalizacao/:token" element={<FiscalizacaoPublica />} />
+          <Route path="*" element={<FiscalizacaoPublica />} />
+        </Routes>
+      </Router>
+    );
+  }
+
+  if (isPublicValidationPath) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/validar-documento/:validationId" element={<ValidacaoDocumento />} />
+          <Route path="*" element={<ValidacaoDocumento />} />
+        </Routes>
+      </Router>
+    );
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-canvas">Carregando...</div>;
   if (!user) return <Login />;
@@ -241,6 +270,8 @@ export default function App() {
                   <Route path="/inspecoes-eletricas" element={<InspecoesEletricas />} />
                   <Route path="/relatorio-tecnico-consolidado" element={<RelatorioTecnicoConsolidado />} />
                   <Route path="/documentos-inteligentes" element={<DocumentosInteligentes />} />
+                  <Route path="/automacao-inteligente" element={<AutomacaoInteligente />} />
+                  <Route path="/modo-fiscalizacao" element={<ModoFiscalizacao />} />
                   <Route path="/validar-documento/:validationId" element={<ValidacaoDocumento />} />
                   <Route path="/dashboard" element={
                     <>

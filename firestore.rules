@@ -68,6 +68,42 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+
+
+    // Automação Inteligente do PIE.
+    match /notifications/{doc=**} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAuthenticated();
+    }
+    match /emailQueue/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /emailLogs/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /automationLogs/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /weeklyReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /equipmentQrCodes/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+
+    // Modo Fiscalização: acesso público controlado por token, somente leitura.
+    function fiscalAccessIsActive(token) {
+      return exists(/databases/$(database)/documents/inspectionAccess/$(token))
+        && get(/databases/$(database)/documents/inspectionAccess/$(token)).data.status == 'ativo'
+        && get(/databases/$(database)/documents/inspectionAccess/$(token)).data.expiresAtTimestamp > request.time;
+    }
+
+    match /inspectionAccess/{token} {
+      allow read: if isAuthenticated() || (resource.data.status == 'ativo' && resource.data.expiresAtTimestamp > request.time);
+      allow create, update, delete: if isAdmin();
+
+      match /publicItems/{itemId} {
+        allow read: if isAuthenticated() || fiscalAccessIsActive(token);
+        allow write: if isAdmin();
+      }
+
+      match /logs/{logId} {
+        allow create: if fiscalAccessIsActive(token);
+        allow read, update, delete: if isAdmin();
+      }
+    }
+
     // Documento usado apenas para testar conexão do Firebase no app.
     match /connection/{doc=**} {
       allow read: if isAuthenticated();

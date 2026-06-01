@@ -1,7 +1,7 @@
 import { NavLink as RouterNavLink } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { LayoutDashboard, ShieldCheck, Building, FileText,
-  ScrollText, FileCheck, BookOpenText, CheckSquare, ClipboardList, Users, Zap, FileDown, X, ShieldAlert, Wrench, FileCog, MapPinned, ClipboardCheck, FileBarChart2 } from 'lucide-react';
+  ScrollText, FileCheck, BookOpenText, CheckSquare, ClipboardList, Users, Zap, FileDown, X, ShieldAlert, Wrench, FileCog, MapPinned, ClipboardCheck, FileBarChart2, BellRing, ScanSearch } from 'lucide-react';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -36,6 +36,8 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: Sideb
         <SideNavItem icon={<Building size={18} />} label="Dados do Cliente" to="/client-data" id="nav-client-data" onNavigate={closeMobileMenu} />
         <SideNavItem icon={<BookOpenText size={18} />} label="Documentos NR-10" to="/documentos-obrigatorios-nr10" id="nav-nr10-docs" onNavigate={closeMobileMenu} />
         <SideNavItem icon={<ScrollText size={18} />} label="Documentos Inteligentes" to="/documentos-inteligentes" id="nav-smart-docs" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<BellRing size={18} />} label="Automação Inteligente" to="/automacao-inteligente" id="nav-automacao" onNavigate={closeMobileMenu} />
+        <SideNavItem icon={<ScanSearch size={18} />} label="Modo Fiscalização" to="/modo-fiscalizacao" id="nav-fiscalizacao" onNavigate={closeMobileMenu} />
         <SideNavItem icon={<FileCheck size={18} />} label="Ensaios Elétricos" to="/laudos-ensaios-eletricos" id="nav-ensaios" onNavigate={closeMobileMenu} />
         <SideNavItem icon={<ShieldAlert size={18} />} label="Laudos NR-12" to="/laudos-nr12" id="nav-nr12" onNavigate={closeMobileMenu} />
         <SideNavItem icon={<ClipboardCheck size={18} />} label="Inspeções Elétricas" to="/inspecoes-eletricas" id="nav-inspecoes" onNavigate={closeMobileMenu} />
