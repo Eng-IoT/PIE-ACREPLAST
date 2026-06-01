@@ -22,9 +22,26 @@ type PublicItem = {
   category?: string;
   status?: string;
   summary?: string;
+
+  // Campos padrão usados pelos documentos públicos
   fileUrl?: string;
+  fileName?: string;
   pdfUrl?: string;
   validationUrl?: string;
+
+  // Campos alternativos usados por módulos diferentes do sistema
+  arquivoUrl?: string;
+  anexoUrl?: string;
+  documentUrl?: string;
+  reportUrl?: string;
+  relatorioUrl?: string;
+  relatorioMedicaoUrl?: string;
+  measurementReportUrl?: string;
+  measurementFileUrl?: string;
+  downloadUrl?: string;
+  storageUrl?: string;
+  url?: string;
+
   sourceCollection?: string;
 };
 
@@ -41,6 +58,56 @@ function statusClass(status?: string) {
   if (normalized.includes('pend') || normalized.includes('aguard') || normalized.includes('aberto')) return 'border-amber-500/40 text-amber-400 bg-amber-950/10';
   if (normalized.includes('concl') || normalized.includes('ativo') || normalized.includes('conforme') || normalized.includes('assinado')) return 'border-emerald-500/40 text-emerald-400 bg-emerald-950/10';
   return 'border-border text-text-tertiary bg-surface-hover';
+}
+
+function isValidExternalUrl(value?: string) {
+  if (!value) return false;
+
+  const url = String(value).trim();
+
+  return (
+    url.startsWith('https://') ||
+    url.startsWith('http://') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:')
+  );
+}
+
+function getDocumentUrl(item: PublicItem) {
+  const possibleUrls = [
+    item.fileUrl,
+    item.pdfUrl,
+    item.relatorioMedicaoUrl,
+    item.relatorioUrl,
+    item.reportUrl,
+    item.arquivoUrl,
+    item.anexoUrl,
+    item.documentUrl,
+    item.measurementReportUrl,
+    item.measurementFileUrl,
+    item.downloadUrl,
+    item.storageUrl,
+    item.url,
+  ];
+
+  return possibleUrls.find(isValidExternalUrl) || '';
+}
+
+async function registerDocumentOpen(token: string | undefined, item: PublicItem) {
+  if (!token) return;
+
+  try {
+    await addDoc(collection(db, 'inspectionAccess', token, 'logs'), {
+      event: 'document_opened',
+      title: item.title || null,
+      category: item.category || null,
+      sourceCollection: item.sourceCollection || null,
+      openedUrl: getDocumentUrl(item) || null,
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    // Não bloqueia a abertura do documento se o registro do log falhar.
+  }
 }
 
 export default function FiscalizacaoPublica() {
@@ -167,19 +234,28 @@ export default function FiscalizacaoPublica() {
                       <h4 className="font-bold text-text-primary mt-4 leading-snug">{item.title || 'Documento'}</h4>
                       <p className="text-xs text-text-secondary mt-2 line-clamp-4 flex-1">{item.summary || 'Documento disponibilizado para consulta em modo fiscalização.'}</p>
                       <div className="flex flex-wrap gap-2 mt-4">
-                        {(item.fileUrl || item.pdfUrl) && (
-                          <a href={item.fileUrl || item.pdfUrl} target="_blank" rel="noreferrer" onClick={() => {
-                            if (token) {
-                              addDoc(collection(db, 'inspectionAccess', token, 'logs'), {
-                                event: 'document_opened',
-                                title: item.title || null,
-                                category: item.category || null,
-                                createdAt: serverTimestamp(),
-                              }).catch(() => undefined);
-                            }
-                          }} className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white">
+                        {getDocumentUrl(item) ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const url = getDocumentUrl(item);
+
+                              if (!url) {
+                                alert('Este documento não possui arquivo anexado para abertura.');
+                                return;
+                              }
+
+                              await registerDocumentOpen(token, item);
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white hover:bg-orange-500 transition"
+                          >
                             <Download size={14} /> Abrir
-                          </a>
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs text-text-tertiary">
+                            Sem anexo
+                          </span>
                         )}
                         {item.validationUrl && <a href={item.validationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs"><Eye size={14} /> Validar</a>}
                       </div>
