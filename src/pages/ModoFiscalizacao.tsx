@@ -47,9 +47,25 @@ type PublicItem = {
   sourceId: string;
   status?: string;
   summary?: string;
+
+  // Campos padrão usados pela tela pública de fiscalização
   fileUrl?: string;
+  fileName?: string;
   pdfUrl?: string;
   validationUrl?: string;
+
+  // Campos alternativos para manter compatibilidade entre módulos diferentes
+  arquivoUrl?: string;
+  anexoUrl?: string;
+  documentUrl?: string;
+  reportUrl?: string;
+  relatorioUrl?: string;
+  relatorioMedicaoUrl?: string;
+  measurementReportUrl?: string;
+  measurementFileUrl?: string;
+  downloadUrl?: string;
+  storageUrl?: string;
+  url?: string;
 };
 
 const PUBLIC_COLLECTIONS = [
@@ -71,7 +87,12 @@ function normalize(value: unknown) {
 }
 
 function getTitle(data: Record<string, unknown>, fallback: string) {
-  return normalize(data.title) || normalize(data.titulo) || normalize(data.name) || normalize(data.nome) || normalize(data.templateTitle) || fallback;
+  return normalize(data.title)
+    || normalize(data.titulo)
+    || normalize(data.name)
+    || normalize(data.nome)
+    || normalize(data.templateTitle)
+    || fallback;
 }
 
 function getSummary(data: Record<string, unknown>) {
@@ -82,16 +103,163 @@ function getSummary(data: Record<string, unknown>) {
     || normalize(data.message)
     || normalize(data.condicao)
     || normalize(data.recomendacao)
+    || normalize(data.responsible)
+    || normalize(data.responsavelTecnico)
+    || normalize(data.responsavel)
     || '';
+}
+
+function getNestedString(data: Record<string, unknown>, path: string) {
+  const parts = path.split('.');
+  let current: unknown = data;
+
+  for (const part of parts) {
+    if (!current || typeof current !== 'object' || !(part in current)) return '';
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return normalize(current);
+}
+
+function getFirstUrlFromArray(value: unknown) {
+  if (!Array.isArray(value)) return '';
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    const url = normalize(record.fileUrl)
+      || normalize(record.url)
+      || normalize(record.downloadUrl)
+      || normalize(record.pdfUrl)
+      || normalize(record.arquivoUrl)
+      || normalize(record.anexoUrl)
+      || normalize(record.relatorioUrl)
+      || normalize(record.relatorioMedicaoUrl);
+
+    if (url) return url;
+  }
+
+  return '';
+}
+
+function getFirstNameFromArray(value: unknown) {
+  if (!Array.isArray(value)) return '';
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    const name = normalize(record.fileName)
+      || normalize(record.name)
+      || normalize(record.nome)
+      || normalize(record.arquivoNome)
+      || normalize(record.anexoNome)
+      || normalize(record.relatorioNome);
+
+    if (name) return name;
+  }
+
+  return '';
 }
 
 function getFileUrl(data: Record<string, unknown>) {
   return normalize(data.fileUrl)
-    || normalize(data.arquivoUrl)
     || normalize(data.pdfUrl)
-    || normalize(data.downloadUrl)
     || normalize(data.url)
+    || normalize(data.arquivoUrl)
+    || normalize(data.anexoUrl)
+    || normalize(data.documentUrl)
+    || normalize(data.reportUrl)
+    || normalize(data.relatorioUrl)
+    || normalize(data.relatorioMedicaoUrl)
+    || normalize(data.measurementReportUrl)
+    || normalize(data.measurementFileUrl)
+    || normalize(data.downloadUrl)
+    || normalize(data.storageUrl)
+    || getNestedString(data, 'pdf.url')
+    || getNestedString(data, 'pdf.fileUrl')
+    || getNestedString(data, 'finalPdf.url')
+    || getNestedString(data, 'finalPdf.fileUrl')
+    || getNestedString(data, 'arquivo.url')
+    || getNestedString(data, 'anexo.url')
+    || getFirstUrlFromArray(data.attachments)
+    || getFirstUrlFromArray(data.anexos)
+    || getFirstUrlFromArray(data.files)
+    || getFirstUrlFromArray(data.evidencias)
     || '';
+}
+
+function getFileName(data: Record<string, unknown>) {
+  return normalize(data.fileName)
+    || normalize(data.pdfName)
+    || normalize(data.arquivoNome)
+    || normalize(data.anexoNome)
+    || normalize(data.documentName)
+    || normalize(data.reportName)
+    || normalize(data.relatorioNome)
+    || normalize(data.relatorioMedicaoNome)
+    || normalize(data.measurementReportName)
+    || normalize(data.measurementFileName)
+    || getNestedString(data, 'pdf.name')
+    || getNestedString(data, 'pdf.fileName')
+    || getNestedString(data, 'finalPdf.name')
+    || getNestedString(data, 'finalPdf.fileName')
+    || getNestedString(data, 'arquivo.name')
+    || getNestedString(data, 'anexo.name')
+    || getFirstNameFromArray(data.attachments)
+    || getFirstNameFromArray(data.anexos)
+    || getFirstNameFromArray(data.files)
+    || getFirstNameFromArray(data.evidencias)
+    || '';
+}
+
+function getStatus(data: Record<string, unknown>) {
+  return normalize(data.status)
+    || normalize(data.situacao)
+    || normalize(data.state)
+    || normalize(data.resultado)
+    || 'disponível';
+}
+
+function getValidationUrl(data: Record<string, unknown>) {
+  return normalize(data.validationUrl)
+    || normalize(data.validacaoUrl)
+    || normalize(data.qrValidationUrl)
+    || normalize(data.publicValidationUrl)
+    || '';
+}
+
+function buildPublicItem(config: { name: string; category: string }, docId: string, data: Record<string, unknown>): PublicItem {
+  const fileUrl = getFileUrl(data);
+  const fileName = getFileName(data);
+
+  return {
+    title: getTitle(data, `${config.category} ${docId.slice(0, 6)}`),
+    category: normalize(data.category) || normalize(data.categoria) || config.category,
+    sourceCollection: config.name,
+    sourceId: docId,
+    status: getStatus(data),
+    summary: getSummary(data).slice(0, 600) || 'Documento disponibilizado para consulta em modo fiscalização.',
+
+    // Campos padrão
+    fileUrl,
+    fileName,
+    pdfUrl: fileUrl,
+    validationUrl: getValidationUrl(data),
+
+    // Campos alternativos para a tela pública reconhecer anexos de todos os módulos.
+    // Isso corrige principalmente SPDA, que salva o relatório no campo "url".
+    url: fileUrl,
+    arquivoUrl: fileUrl,
+    anexoUrl: fileUrl,
+    documentUrl: fileUrl,
+    reportUrl: fileUrl,
+    relatorioUrl: fileUrl,
+    relatorioMedicaoUrl: fileUrl,
+    measurementReportUrl: fileUrl,
+    measurementFileUrl: fileUrl,
+    downloadUrl: fileUrl,
+    storageUrl: fileUrl,
+  };
 }
 
 function formatDate(value?: InspectionAccess['createdAt'] | string) {
@@ -141,19 +309,10 @@ export default function ModoFiscalizacao() {
 
     for (const config of PUBLIC_COLLECTIONS) {
       const snapshot = await getDocs(collection(db, config.name));
+
       snapshot.docs.slice(0, config.limit).forEach((docSnap) => {
         const data = docSnap.data() as Record<string, unknown>;
-        items.push({
-          title: getTitle(data, `${config.category} ${docSnap.id.slice(0, 6)}`),
-          category: config.category,
-          sourceCollection: config.name,
-          sourceId: docSnap.id,
-          status: normalize(data.status || data.situacao || data.state),
-          summary: getSummary(data).slice(0, 600),
-          fileUrl: getFileUrl(data),
-          pdfUrl: normalize(data.pdfUrl),
-          validationUrl: normalize(data.validationUrl),
-        });
+        items.push(buildPublicItem(config, docSnap.id, data));
       });
     }
 
@@ -215,16 +374,18 @@ export default function ModoFiscalizacao() {
         createdAt: serverTimestamp(),
       });
 
-      await addDoc(collection(db, 'emailQueue'), {
-        to: form.fiscalEmail.trim(),
-        subject: 'Acesso fiscal ao PIE ACREPLAST NR-10',
-        html: `<h2>Acesso fiscal ao PIE ACREPLAST</h2><p>Olá, ${form.fiscalName}.</p><p>Use o link abaixo para acessar os documentos em modo somente leitura:</p><p><a href="${publicUrl}">${publicUrl}</a></p><p>Validade: ${expires.toLocaleDateString('pt-BR')}.</p>`,
-        text: `Acesso fiscal ao PIE ACREPLAST: ${publicUrl}. Validade: ${expires.toLocaleDateString('pt-BR')}.`,
-        status: 'pendente',
-        type: 'inspection-access',
-        createdAt: serverTimestamp(),
-        createdByEmail: auth.currentUser?.email || null,
-      });
+      if (form.fiscalEmail.trim()) {
+        await addDoc(collection(db, 'emailQueue'), {
+          to: form.fiscalEmail.trim(),
+          subject: 'Acesso fiscal ao PIE ACREPLAST NR-10',
+          html: `<h2>Acesso fiscal ao PIE ACREPLAST</h2><p>Olá, ${form.fiscalName}.</p><p>Use o link abaixo para acessar os documentos em modo somente leitura:</p><p><a href="${publicUrl}">${publicUrl}</a></p><p>Validade: ${expires.toLocaleDateString('pt-BR')}.</p>`,
+          text: `Acesso fiscal ao PIE ACREPLAST: ${publicUrl}. Validade: ${expires.toLocaleDateString('pt-BR')}.`,
+          status: 'pendente',
+          type: 'inspection-access',
+          createdAt: serverTimestamp(),
+          createdByEmail: auth.currentUser?.email || null,
+        });
+      }
 
       setForm({ fiscalName: '', fiscalEmail: '', organization: '', purpose: 'Auditoria / fiscalização documental do PIE NR-10', validityDays: '7' });
       setMessage(`Acesso criado com sucesso. ${itemCount} item(ns) foram preparados para visualização.`);
@@ -354,6 +515,7 @@ function StatusCard({ title, value, icon, tone }: { title: string; value: number
     amber: 'text-amber-400 bg-amber-950/10 border-amber-500/30',
     red: 'text-red-400 bg-red-950/10 border-red-500/30',
   }[tone];
+
   return (
     <div className={`rounded-3xl border p-5 ${toneClass}`}>
       <div className="flex items-center justify-between gap-3">
