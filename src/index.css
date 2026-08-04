@@ -19,12 +19,12 @@
 }
 
 :root {
-  --canvas: #020617;
-  --surface: #0f172a;
-  --surface-hover: rgba(34, 211, 238, 0.05);
-  --surface-active: rgba(34, 211, 238, 0.1);
-  --border: rgba(34, 211, 238, 0.1);
-  --border-strong: rgba(34, 211, 238, 0.25);
+  --canvas: #080a24;
+  --surface: #11132f;
+  --surface-hover: rgba(237, 28, 36, 0.06);
+  --surface-active: rgba(237, 28, 36, 0.12);
+  --border: rgba(245, 161, 22, 0.14);
+  --border-strong: rgba(237, 28, 36, 0.42);
   --text-primary: #e2e8f0;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
@@ -41,6 +41,42 @@
   --text-secondary: #1f2937;
   --text-tertiary: #4b5563;
 }
+
+.brand-login {
+  background: radial-gradient(circle at 50% -10%, rgba(237, 28, 36, .28), transparent 38%), linear-gradient(145deg, #080a24, #15183a);
+}
+
+.brand-hero {
+  background: radial-gradient(circle at 92% 0%, rgba(237, 28, 36, .22), transparent 35%), linear-gradient(135deg, rgba(17, 19, 47, .98), rgba(8, 10, 36, .92));
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  min-width: 0;
+  color: var(--text-secondary);
+  font: 600 .68rem/1.2 "JetBrains Mono", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.field-control {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: .65rem;
+  background: var(--canvas);
+  padding: .7rem .8rem;
+  color: var(--text-primary);
+  font: 400 .875rem/1.4 "Inter", sans-serif;
+  letter-spacing: normal;
+  text-transform: none;
+  outline: none;
+}
+
+.field-control:focus { border-color: #ed1c24; box-shadow: 0 0 0 3px rgba(237, 28, 36, .12); }
+.field-control:disabled { opacity: .72; cursor: not-allowed; }
 
 .high-contrast {
   --canvas: #000000;
@@ -217,6 +253,13 @@ select option {
 .main-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(249, 115, 22, 0.55) transparent;
+}
+
+@media (max-width: 767px) {
+  button, a, input, select { min-height: 44px; }
+  table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .recharts-responsive-container { min-height: 240px; }
+  h1, h2, h3, p, td, th, label { overflow-wrap: anywhere; }
 }
 
 .sidebar-scrollbar::-webkit-scrollbar,

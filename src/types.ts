@@ -10,6 +10,9 @@ export type Worker = {
 export type ActionPlanItem = { 
   id: string; 
   status: string; 
-  description: string; 
+  description?: string;
+  name?: string;
+  deadline?: string;
+  responsible?: string;
   priority?: string; 
 };

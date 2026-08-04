@@ -44,6 +44,8 @@ import ValidacaoDocumento from './pages/ValidacaoDocumento';
 import AutomacaoInteligente from './pages/AutomacaoInteligente';
 import ModoFiscalizacao from './pages/ModoFiscalizacao';
 import FiscalizacaoPublica from './pages/FiscalizacaoPublica';
+import TransicaoNR10 from './pages/TransicaoNR10';
+import { calculateCompliance, normalizeActionStatus } from './lib/compliance';
 
 export default function App() {
   const { user, loading, role } = useAuth();
@@ -63,7 +65,7 @@ export default function App() {
   const [isEditingEngineer, setIsEditingEngineer] = useState(false);
   const [editEngineerName, setEditEngineerName] = useState('');
   
-  const [compliance, setCompliance] = useState('0');
+  const [compliance, setCompliance] = useState<string | null>(null);
   const [actionPlanCount, setActionPlanCount] = useState(0);
   const [actionPlanData, setActionPlanData] = useState<ActionPlanItem[]>([]);
   const [workersCount, setWorkersCount] = useState(0);
@@ -83,7 +85,7 @@ export default function App() {
     const root = document.documentElement;
     root.classList.toggle('theme-light', theme === 'light');
 
-    const themeColor = theme === 'light' ? '#f8fafc' : '#020617';
+    const themeColor = theme === 'light' ? '#f8fafc' : '#11132f';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor);
   }, [theme]);
 
@@ -102,17 +104,13 @@ export default function App() {
     });
 
     const unsubChecklist = onSnapshot(collection(db, 'checklistItems'), (snapshot) => {
-        let conforme = 0;
-        snapshot.docs.forEach(doc => {
-            if (doc.data().status === 'conforme') conforme++;
-        });
-        const total = snapshot.size;
-        setCompliance(total > 0 ? ((conforme / total) * 100).toFixed(1) : '100');
+        const result = calculateCompliance(snapshot.docs.map(item => item.data().status));
+        setCompliance(result.percentual === null ? null : result.percentual.toFixed(1));
         setIsLoading(prev => ({ ...prev, compliance: false }));
     });
 
     const unsubActionPlan = onSnapshot(collection(db, 'actionPlan'), (snapshot) => {
-        setActionPlanCount(snapshot.size);
+        setActionPlanCount(snapshot.docs.filter(item => normalizeActionStatus(item.data().status) !== 'completed').length);
         setActionPlanData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ActionPlanItem)));
         setIsLoading(prev => ({ ...prev, actionPlan: false }));
     });
@@ -123,9 +121,23 @@ export default function App() {
         setIsLoading(prev => ({ ...prev, workers: false }));
     });
     
-    const unsubDocuments = onSnapshot(collection(db, 'documents'), (snapshot) => {
-        setDocumentsCount(snapshot.size);
-        setIsLoading(prev => ({ ...prev, documents: false }));
+    const documentCollections = [
+      'documents', 'electrical-projects', 'spdaReports', 'trt-art', 'relatorios', 'laudos',
+      'nr10Documents', 'smartDocuments', 'electricalTestReports', 'nr12Reports',
+      'electricalInspections', 'technicalReports', 'procedures', 'classifiedAreas', 'ppeTools'
+    ];
+    const counts: Record<string, number> = {};
+    const updateDocumentTotal = () => {
+      setDocumentsCount(Object.values(counts).reduce((total, value) => total + value, 0));
+      setIsLoading(prev => ({ ...prev, documents: false }));
+    };
+    const documentUnsubs = documentCollections.map(name => onSnapshot(collection(db, name), snapshot => {
+      counts[name] = snapshot.size;
+      updateDocumentTotal();
+    }));
+    const unsubClientArt = onSnapshot(doc(db, 'clientData', 'main'), snapshot => {
+      counts.clientArt = snapshot.exists() && snapshot.data().artUrl ? 1 : 0;
+      updateDocumentTotal();
     });
 
     return () => {
@@ -134,7 +146,8 @@ export default function App() {
         unsubChecklist();
         unsubActionPlan();
         unsubWorkers();
-        unsubDocuments();
+        documentUnsubs.forEach(unsubscribe => unsubscribe());
+        unsubClientArt();
     };
   }, [user]);
 
@@ -250,7 +263,7 @@ export default function App() {
             saveEngineerName={saveEngineerName}
           />
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-10 main-scrollbar">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-5 lg:p-8 xl:p-10 main-scrollbar">
             <div className="flex min-h-full flex-col gap-6 md:gap-10">
               <div className="flex-1">
                 <AnimatePresence mode="wait">
@@ -275,6 +288,7 @@ export default function App() {
                   <Route path="/documentos-inteligentes" element={<DocumentosInteligentes />} />
                   <Route path="/automacao-inteligente" element={<AutomacaoInteligente />} />
                   <Route path="/modo-fiscalizacao" element={<ModoFiscalizacao />} />
+                  <Route path="/nr10-2026" element={<TransicaoNR10 />} />
                   <Route path="/validar-documento/:validationId" element={<ValidacaoDocumento />} />
                   <Route path="/dashboard" element={
                     <>
@@ -282,10 +296,10 @@ export default function App() {
                         <PendingAlerts workers={workersData} actionPlan={actionPlanData} />
                       </section>
                       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        {isLoading.compliance ? <Skeleton className="h-32" /> : <MetricCard title="Conformidade" value={compliance} unit="%" />}
-                        {isLoading.actionPlan ? <Skeleton className="h-32" /> : <MetricCard title="Plano de Ação" value={`${actionPlanCount}`} unit="itens" />}
+                        {isLoading.compliance ? <Skeleton className="h-32" /> : <MetricCard title="Conformidade" value={compliance ?? 'N/C'} unit={compliance === null ? '' : '%'} subtitle={compliance === null ? 'Dados insuficientes' : 'Itens avaliados'} />}
+                        {isLoading.actionPlan ? <Skeleton className="h-32" /> : <MetricCard title="Plano de Ação" value={`${actionPlanCount}`} unit={actionPlanCount === 1 ? 'item aberto' : 'itens abertos'} />}
                         {isLoading.workers ? <Skeleton className="h-32" /> : <MetricCard title="Trabalhadores" value={`${workersCount}`} unit="ativos" />}
-                        {isLoading.documents ? <Skeleton className="h-32" /> : <MetricCard title="Documentos" value={`${documentsCount}`} unit="files" />}
+                        {isLoading.documents ? <Skeleton className="h-32" /> : <MetricCard title="Documentos" value={`${documentsCount}`} unit="arquivos" subtitle="Total consolidado" />}
                       </section>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 auto-rows-min">
@@ -367,11 +381,11 @@ function Section({ title, children, className = '' }: { title: string, children:
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`group bg-surface/80 backdrop-blur-md rounded-2xl border border-border hover:border-orange-500/30 p-7 lg:p-9 h-full flex flex-col relative overflow-hidden transition-colors ${className}`}
+      className={`group bg-surface/80 backdrop-blur-md rounded-2xl border border-border hover:border-orange-500/30 p-4 sm:p-6 lg:p-9 h-full flex flex-col relative overflow-hidden transition-colors ${className}`}
     >
       <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 blur-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-orange-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <h2 className="text-[11px] font-mono uppercase tracking-[0.3em] font-medium text-orange-400 flex items-center gap-4 mb-8 pb-4 border-b border-border/30 relative z-10">
+      <h2 className="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.18em] sm:tracking-[0.3em] font-medium text-orange-400 flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8 pb-4 border-b border-border/30 relative z-10">
         <div className="flex gap-1.5">
           <span className="w-1.5 h-3.5 rounded-sm bg-orange-500 shrink-0" />
           <span className="w-1.5 h-3.5 rounded-sm bg-orange-500/50 shrink-0" />
