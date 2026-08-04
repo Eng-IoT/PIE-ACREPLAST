@@ -1,13 +1,34 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, X, PenTool, Save, RotateCcw, WifiOff } from 'lucide-react';
-import { collection, updateDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, updateDoc, doc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import SignatureCanvas from 'react-signature-canvas';
+import { useAuth } from './AuthContext';
+import { normalizeComplianceStatus } from '../lib/compliance';
 
-type Status = 'conforme' | 'nao-conforme';
+type Status = 'conforme' | 'nao_conforme' | 'pendente' | 'nao_avaliado' | 'nao_aplicavel';
 type Item = { id: string; name: string; status: Status; evidenceUrl?: string };
 
+const DEFAULT_CHECKLIST = [
+  'Prontuário de Instalações Elétricas constituído e atualizado',
+  'Diagramas unifilares atualizados e disponíveis',
+  'Documentação do sistema de aterramento atualizada',
+  'Relatório de inspeção e medição do SPDA válido',
+  'Ensaios de resistência de isolamento registrados',
+  'Continuidade dos condutores de proteção verificada',
+  'Proteções DR e DPS inspecionadas e ensaiadas',
+  'Quadros e painéis identificados, fechados e sinalizados',
+  'Trabalhadores autorizados e registros profissionais atualizados',
+  'Treinamentos NR-10 dentro da validade',
+  'EPI, EPC e ferramental adequados e dentro da validade',
+  'Procedimentos de trabalho, APR e PT disponíveis',
+  'Procedimento de bloqueio e etiquetagem (LOTO) implantado',
+  'Plano de emergência, resgate e primeiros socorros documentado',
+  'Não conformidades vinculadas ao plano de ação'
+];
+
 export default function NR10Checklist() {
+  const { role } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const sigPad = useRef<SignatureCanvas>(null);
@@ -29,7 +50,12 @@ export default function NR10Checklist() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'checklistItems'), (snapshot) => {
-      setItems(snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, status: doc.data().status, evidenceUrl: doc.data().evidenceUrl } as Item)));
+      setItems(snapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name,
+        status: normalizeComplianceStatus(doc.data().status),
+        evidenceUrl: doc.data().evidenceUrl
+      } as Item)));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'checklistItems');
     });
@@ -47,12 +73,28 @@ export default function NR10Checklist() {
     return unsubSig;
   }, []);
 
-  const toggleStatus = async (id: string, currentStatus: Status) => {
+  const updateStatus = async (id: string, newStatus: Status) => {
     try {
-      const newStatus = currentStatus === 'conforme' ? 'nao-conforme' : 'conforme';
       await updateDoc(doc(db, 'checklistItems', id), { status: newStatus });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `checklistItems/${id}`);
+    }
+  };
+
+  const initializeChecklist = async () => {
+    if (role !== 'admin' || items.length > 0) return;
+    try {
+      const batch = writeBatch(db);
+      DEFAULT_CHECKLIST.forEach((name, index) => {
+        batch.set(doc(db, 'checklistItems', `nr10-${String(index + 1).padStart(2, '0')}`), {
+          name,
+          status: 'nao_avaliado',
+          createdAt: new Date().toISOString(),
+        });
+      });
+      await batch.commit();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'checklistItems');
     }
   };
 
@@ -110,17 +152,32 @@ export default function NR10Checklist() {
       )}
 
       <div className="space-y-2">
+        {items.length === 0 && (
+          <div className="rounded-xl border border-dashed border-amber-500/30 bg-amber-500/5 p-6 text-center">
+            <p className="mb-3 text-xs text-amber-200">Nenhum requisito foi cadastrado. A conformidade permanecerá não calculada.</p>
+            {role === 'admin' && (
+              <button onClick={initializeChecklist} className="rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-orange-300 hover:bg-orange-500/20">
+                Inicializar checklist padrão NR-10
+              </button>
+            )}
+          </div>
+        )}
         {items.map(item => (
           <div key={item.id} className="p-3 bg-surface-hover rounded-lg border border-border space-y-2">
               <div className="flex justify-between items-center">
               <span className="text-xs text-text-secondary font-mono">{item.name}</span>
-              <button onClick={() => toggleStatus(item.id, item.status)} className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface ${item.status === 'conforme' ? 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20 hover:shadow-[0_0_15px_rgba(74,222,128,0.2)] focus:ring-green-500/50' : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20 hover:shadow-[0_0_15px_rgba(248,113,113,0.2)] focus:ring-red-500/50'}`}>
-                  {item.status === 'conforme' ? (
-                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>CONFORME</span>
-                  ) : (
-                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 shadow-[0_0_5px_rgba(248,113,113,0.8)] animate-pulse"></span>NÃO CONFORME</span>
-                  )}
-              </button>
+              <select
+                value={item.status}
+                onChange={event => updateStatus(item.id, event.target.value as Status)}
+                disabled={role !== 'admin'}
+                className="rounded border border-border-strong bg-surface px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-primary disabled:opacity-70"
+              >
+                <option value="nao_avaliado">Não avaliado</option>
+                <option value="conforme">Conforme</option>
+                <option value="nao_conforme">Não conforme</option>
+                <option value="pendente">Pendente</option>
+                <option value="nao_aplicavel">Não aplicável</option>
+              </select>
               </div>
               {item.evidenceUrl ? (
                   <div className="relative group">

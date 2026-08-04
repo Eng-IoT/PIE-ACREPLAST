@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { calculateCompliance, isOverdue, normalizeActionStatus, normalizePriority } from '../lib/compliance';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { ShieldAlert, AlertTriangle, Download, FileText } from 'lucide-react';
 import { jsPDF } from 'jspdf';
@@ -8,7 +9,8 @@ import autoTable from 'jspdf-autotable';
 
 export default function ComplianceSummary() {
   const [criticalPending, setCriticalPending] = useState(0);
-  const [complianceLevel, setComplianceLevel] = useState(0);
+  const [complianceLevel, setComplianceLevel] = useState<number | null>(null);
+  const [pendingItems, setPendingItems] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +22,8 @@ export default function ComplianceSummary() {
         let criticalCount = 0;
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.priority === 'critical' && data.status !== 'completed') {
+          const open = normalizeActionStatus(data.status) !== 'completed';
+          if (open && (normalizePriority(data.priority) === 'critical' || isOverdue(data.deadline, data.status))) {
             criticalCount++;
           }
         });
@@ -28,20 +31,9 @@ export default function ComplianceSummary() {
       });
 
       checklistUnsub = onSnapshot(collection(db, 'checklistItems'), (snapshot) => {
-        let conforme = 0;
-        let total = 0;
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.status === 'conforme') {
-            conforme++;
-            total++;
-          } else if (data.status === 'nao_conforme') {
-            total++;
-          }
-        });
-        
-        const level = total === 0 ? 0 : Math.round((conforme / total) * 100);
-        setComplianceLevel(level);
+        const result = calculateCompliance(snapshot.docs.map(item => item.data().status));
+        setComplianceLevel(result.percentual);
+        setPendingItems(result.pendente + result.naoAvaliado);
         setLoading(false);
       });
 
@@ -57,7 +49,8 @@ export default function ComplianceSummary() {
   }, []);
 
   const exportData = {
-    nivelConformidade: `${complianceLevel}%`,
+    nivelConformidade: complianceLevel === null ? 'Não calculada — dados insuficientes' : `${complianceLevel}%`,
+    itensPendentesOuNaoAvaliados: pendingItems,
     acoesCriticasPendentes: criticalPending,
     dataGeracao: new Date().toISOString()
   };
@@ -92,8 +85,8 @@ export default function ComplianceSummary() {
   };
 
   const chartData = [
-    { name: 'Conforme', value: complianceLevel, color: '#22c55e' }, // green-500
-    { name: 'Ñ Conforme', value: 100 - complianceLevel, color: '#ef4444' } // red-500
+    { name: 'Conforme', value: complianceLevel ?? 0, color: '#22c55e' },
+    { name: 'Não conforme', value: complianceLevel === null ? 0 : 100 - complianceLevel, color: '#ef4444' }
   ];
 
   if (loading) {
@@ -127,10 +120,15 @@ export default function ComplianceSummary() {
       <div className="p-4 rounded-xl border border-border bg-surface-active/50 flex flex-col items-center relative overflow-hidden">
          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
          <div className="flex items-center gap-3 mb-4 w-full border-b border-border/50 pb-2">
-           <ShieldAlert size={16} className={complianceLevel >= 80 ? 'text-green-400' : 'text-cyan-400'} />
+           <ShieldAlert size={16} className={complianceLevel !== null && complianceLevel >= 80 ? 'text-green-400' : 'text-cyan-400'} />
            <div className="text-[10px] text-cyan-500 font-mono uppercase tracking-[0.2em]">Nível de Conformidade</div>
-           <div className="ml-auto text-lg font-mono font-bold text-text-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{complianceLevel}%</div>
+           <div className="ml-auto text-lg font-mono font-bold text-text-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{complianceLevel === null ? 'N/C' : `${complianceLevel}%`}</div>
          </div>
+         {complianceLevel === null && (
+           <div className="w-full mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-amber-300">
+             Conformidade não calculada — dados insuficientes.
+           </div>
+         )}
          <div className="h-24 w-full">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>

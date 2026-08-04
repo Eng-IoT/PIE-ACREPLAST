@@ -3,6 +3,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Loader2 } from 'lucide-react';
+import { calculateCompliance } from '../lib/compliance';
 
 export default function ChecklistStatusChart() {
   const [data, setData] = useState<{name: string, value: number}[]>([]);
@@ -10,18 +11,12 @@ export default function ChecklistStatusChart() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'checklistItems'), (snapshot) => {
-      let conforme = 0;
-      let naoConforme = 0;
-      
-      snapshot.docs.forEach(doc => {
-        const itemData = doc.data();
-        if (itemData.status === 'conforme') conforme++;
-        else naoConforme++;
-      });
+      const result = calculateCompliance(snapshot.docs.map(item => item.data().status));
       
       setData([
-        { name: 'Conforme', value: conforme },
-        { name: 'Não Conforme', value: naoConforme }
+        { name: 'Conforme', value: result.conforme },
+        { name: 'Não conforme', value: result.naoConforme },
+        { name: 'Pendente', value: result.pendente + result.naoAvaliado }
       ]);
       setLoading(false);
     }, (error) => {
@@ -36,7 +31,7 @@ export default function ChecklistStatusChart() {
     return <div className="flex justify-center items-center h-48"><Loader2 className="animate-spin text-orange-500" /></div>;
   }
 
-  const COLORS = ['#fb923c', '#f87171']; // orange-400, red-400
+  const COLORS = ['#4ade80', '#f87171', '#facc15'];
 
   return (
     <div className="h-full w-full min-h-[250px] relative">
@@ -58,7 +53,7 @@ export default function ChecklistStatusChart() {
             cornerRadius={4}
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={index === 0 ? '#fb923c' : '#f87171'} style={{ filter: `drop-shadow(0 0 5px ${index === 0 ? 'rgba(249,115,22,0.5)' : 'rgba(248,113,113,0.5)'})` }} />
+              <Cell key={`cell-${index}`} fill={COLORS[index] || '#94a3b8'} />
             ))}
           </Pie>
           <Tooltip 

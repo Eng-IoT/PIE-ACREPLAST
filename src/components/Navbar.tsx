@@ -41,8 +41,8 @@ export default function Navbar({
   saveEngineerName,
 }: NavbarProps) {
   return (
-    <header className="h-20 border-b border-border flex items-center justify-between px-4 md:px-10 bg-surface/50 backdrop-blur-md relative z-20" id="header-navbar">
-      <div className="flex items-center gap-4">
+    <header className="min-h-16 sm:min-h-20 border-b border-border flex items-center justify-between gap-2 px-3 sm:px-4 md:px-8 lg:px-10 py-2 bg-surface/70 backdrop-blur-md relative z-20" id="header-navbar">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
         <button 
           id="navbar-mobile-menu-btn"
           className="md:hidden text-text-secondary hover:text-text-primary" 
@@ -50,14 +50,14 @@ export default function Navbar({
         >
           <Menu size={24} />
         </button>
-        <div className="flex flex-col group">
+        <div className="flex flex-col group min-w-0">
           <div className="flex items-center gap-2">
             {isEditingCompany ? (
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   id="navbar-edit-company-input"
-                  className="bg-surface border border-border-strong rounded px-2 py-1 text-lg md:text-3xl font-serif font-light text-text-primary w-[250px] md:w-[450px] outline-none focus:border-orange-500"
+                  className="bg-surface border border-border-strong rounded px-2 py-1 text-base md:text-2xl font-display text-text-primary w-[min(52vw,450px)] outline-none focus:border-orange-500"
                   value={editCompanyName}
                   onChange={(e) => setEditCompanyName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveCompanyName()}
@@ -83,7 +83,7 @@ export default function Navbar({
                 <h1 
                   id="navbar-company-title"
                   onClick={() => { setEditCompanyName(companyName); setIsEditingCompany(true); }}
-                  className="text-lg md:text-3xl font-display font-bold text-orange-400 tracking-widest uppercase truncate max-w-[250px] md:max-w-xl drop-shadow-[0_0_8px_rgba(249,115,22,0.3)] cursor-pointer hover:text-orange-300 transition-colors"
+                  className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-display font-bold text-orange-400 tracking-wide sm:tracking-widest uppercase truncate max-w-[46vw] sm:max-w-[42vw] lg:max-w-xl drop-shadow-[0_0_8px_rgba(249,115,22,0.3)] cursor-pointer hover:text-orange-300 transition-colors"
                   title="Clique para editar"
                 >
                   {companyName}
@@ -94,7 +94,7 @@ export default function Navbar({
           <span className="text-[8px] md:text-[10px] text-text-tertiary uppercase tracking-[0.2em] md:tracking-[0.3em] truncate max-w-[200px] md:max-w-none">Prontuário Exclusivo do Cliente</span>
         </div>
       </div>
-      <div className="flex items-center gap-4 md:gap-6">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-5 shrink-0">
         <NotificationBell />
         <button 
           id="navbar-high-contrast-btn"

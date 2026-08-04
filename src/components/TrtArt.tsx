@@ -13,10 +13,12 @@ type DocumentItem = {
   tipo?: 'TRT' | 'ART' | 'Outro';
   descricao?: string;
   dataEmissao?: string;
+  source?: 'trt-art' | 'clientData';
 };
 
 export default function TrtArt() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [clientDocument, setClientDocument] = useState<DocumentItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTipo, setFilterTipo] = useState<'Todos' | 'TRT' | 'ART' | 'Outro'>('Todos');
   const [isAdding, setIsAdding] = useState(false);
@@ -50,13 +52,27 @@ export default function TrtArt() {
           numero: data.numero || '',
           tipo: data.tipo || (data.name?.toUpperCase().includes('ART') ? 'ART' : 'TRT'),
           descricao: data.descricao || data.name || 'Sem descrição',
-          dataEmissao: data.dataEmissao || ''
+          dataEmissao: data.dataEmissao || '',
+          source: 'trt-art'
         } as DocumentItem;
       }));
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'trt-art');
     });
-    return unsub;
+    const unsubClient = onSnapshot(doc(db, 'clientData', 'main'), snapshot => {
+      const data = snapshot.data();
+      setClientDocument(data?.artUrl ? {
+        id: 'client-data-art',
+        name: data.artName || 'ART / TRT do cliente',
+        url: data.artUrl,
+        numero: data.artNumero || '',
+        tipo: String(data.artName || '').toUpperCase().includes('ART') ? 'ART' : 'TRT',
+        descricao: 'Documento vinculado automaticamente aos Dados do Cliente',
+        dataEmissao: data.artDataEmissao || '',
+        source: 'clientData'
+      } : null);
+    });
+    return () => { unsub(); unsubClient(); };
   }, []);
 
   const deleteStorageFile = async (fileUrl?: string) => {
@@ -169,7 +185,8 @@ export default function TrtArt() {
     }
   };
 
-  const filteredDocuments = documents.filter(d => {
+  const allDocuments = clientDocument ? [clientDocument, ...documents] : documents;
+  const filteredDocuments = allDocuments.filter(d => {
     const matchesSearch = 
       (d.numero && d.numero.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (d.descricao && d.descricao.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -431,13 +448,15 @@ export default function TrtArt() {
                         >
                           <ExternalLink size={14} />
                         </a>
-                        <button 
-                          onClick={() => setDeleteAttachmentTargetId(docItem.id)}
-                          className="p-1 text-text-tertiary hover:text-red-400 rounded transition-colors"
-                          title="Remover anexo técnico"
-                        >
-                          <FileX size={14} />
-                        </button>
+                        {docItem.source !== 'clientData' && (
+                          <button 
+                            onClick={() => setDeleteAttachmentTargetId(docItem.id)}
+                            className="p-1 text-text-tertiary hover:text-red-400 rounded transition-colors"
+                            title="Remover anexo técnico"
+                          >
+                            <FileX size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -460,13 +479,15 @@ export default function TrtArt() {
 
               {/* Action columns */}
               <div className="flex items-center justify-end shrink-0 gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-border md:pl-4">
-                <button 
-                  onClick={() => setDeleteTargetId(docItem.id)} 
-                  className="p-2.5 text-text-tertiary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20" 
-                  title="Excluir Registro"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {docItem.source !== 'clientData' && (
+                  <button 
+                    onClick={() => setDeleteTargetId(docItem.id)} 
+                    className="p-2.5 text-text-tertiary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20" 
+                    title="Excluir Registro"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

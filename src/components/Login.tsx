@@ -22,9 +22,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-950 p-6">
-      <form onSubmit={handleSubmit} className="bg-blue-900/30 p-8 rounded-2xl border border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.2)] w-full max-w-sm space-y-6 backdrop-blur-sm">
-        <h2 className="text-2xl font-display font-bold text-orange-500 text-center uppercase tracking-widest">Acesso</h2>
+    <div className="min-h-screen flex items-center justify-center brand-login p-4 sm:p-6">
+      <form onSubmit={handleSubmit} className="bg-[#11132f]/90 p-6 sm:p-8 rounded-2xl border border-red-500/60 shadow-[0_0_40px_rgba(237,28,36,0.18)] w-full max-w-sm space-y-6 backdrop-blur-sm">
+        <img src="/acreplast-logo.png" alt="Acreplast" className="w-56 max-w-full h-24 mx-auto object-contain" />
+        <div className="text-center"><h2 className="text-xl font-display font-bold text-orange-400 uppercase tracking-widest">PIE NR-10</h2><p className="text-xs text-slate-400 mt-1">Prontuário Elétrico Digital</p></div>
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
         <div>
           <label className="block text-xs font-mono text-orange-300 uppercase mb-2 tracking-wider">Email</label>

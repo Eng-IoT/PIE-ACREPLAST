@@ -1,24 +1,30 @@
 import { motion } from 'motion/react';
 import { AlertTriangle, ClipboardList, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isOverdue, normalizeActionStatus, normalizePriority, parseLocalDate } from '../lib/compliance';
 
 type Worker = { id: string; name: string; certificateValidity: string };
-type Action = { id: string; status: string; description: string; priority?: string };
+type Action = { id: string; status: string; description?: string; name?: string; deadline?: string; priority?: string };
 
 export default function PendingAlerts({ workers, actionPlan }: { workers: Worker[], actionPlan: Action[] }) {
   const navigate = useNavigate();
 
   const isExpiringSoon = (dateStr: string) => {
     if (!dateStr) return false;
-    const expDate = new Date(dateStr);
+    const expDate = parseLocalDate(dateStr);
+    if (!expDate) return false;
     const today = new Date();
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 30; // Expiring in 30 days
+    return diffDays <= 30;
   };
 
   const expiredCertificates = workers.filter(w => isExpiringSoon(w.certificateValidity));
-  const criticalActions = actionPlan.filter(a => a.status === 'Pendente' && a.priority === 'Alta');
+  const criticalActions = actionPlan.filter(a => {
+    const open = normalizeActionStatus(a.status) !== 'completed';
+    const priority = normalizePriority(a.priority);
+    return open && (priority === 'critical' || priority === 'high' || isOverdue(a.deadline, a.status));
+  });
 
   if (expiredCertificates.length === 0 && criticalActions.length === 0) return null;
 
@@ -49,12 +55,12 @@ export default function PendingAlerts({ workers, actionPlan }: { workers: Worker
           <div className="bg-surface rounded-lg p-4 border border-border">
             <h3 className="text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
               <ClipboardList size={16} />
-              Ações Críticas ({criticalActions.length})
+              Ações prioritárias ou vencidas ({criticalActions.length})
             </h3>
             <ul className="space-y-2">
               {criticalActions.slice(0, 3).map(a => (
                 <li key={a.id} className="text-xs text-text-secondary flex justify-between items-center cursor-pointer hover:text-orange-400" onClick={() => navigate('/action-plan')}>
-                  {a.description}
+                  {a.description || a.name || 'Ação sem descrição'}
                   <ChevronRight size={14} />
                 </li>
               ))}
