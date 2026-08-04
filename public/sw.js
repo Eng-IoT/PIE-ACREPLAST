@@ -8,7 +8,7 @@ const APP_SHELL = [
   '/offline.html',
   '/manifest.webmanifest',
   '/manifest.json',
-  '/logo.png',
+  '/acreplast-logo.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/maskable-192.png',
