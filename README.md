@@ -1,3 +1,8 @@
+# PIE ACREPLAST NR-10
+
+> Versão revisada em 04/08/2026. Consulte `CORRECOES-AUDITORIA-2026-08-04.md`
+> para conhecer as correções de conformidade, alertas, documentos e segurança.
+
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
@@ -45,4 +50,3 @@ npm run preview
 Depois abra `http://localhost:4173` e confira no DevTools > Application.
 
 Mais detalhes: `GUIA-PWA-INSTALACAO.md`.
-

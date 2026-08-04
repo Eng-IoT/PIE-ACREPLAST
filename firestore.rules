@@ -74,11 +74,15 @@ service cloud.firestore {
     match /notifications/{doc=**} {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
-      allow update: if isAuthenticated();
+      allow update: if isAdmin() || (
+        isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readBy'])
+      );
     }
     match /emailQueue/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /emailLogs/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /automationLogs/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /nr10Transition2026/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /weeklyReports/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /equipmentQrCodes/{doc=**} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
 
