@@ -25,11 +25,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { normalizeActionStatus } from '../lib/compliance';
 
 type NotificationType = 'info' | 'warning' | 'critical' | 'success';
 
 type AutomationRecord = {
   id: string;
+  key?: string;
   title?: string;
   message?: string;
   type?: NotificationType;
@@ -120,8 +122,7 @@ function getStatus(data: Record<string, unknown>) {
 }
 
 function isActionOpen(status: string) {
-  const closedStatuses = ['concluido', 'concluída', 'concluida', 'feito', 'finalizado', 'arquivado', 'cancelado', 'conforme', 'fechado'];
-  return !closedStatuses.some(item => status.includes(item));
+  return normalizeActionStatus(status) !== 'completed';
 }
 
 async function scanDeadlines(): Promise<ScanIssue[]> {
@@ -226,7 +227,10 @@ export default function AutomacaoInteligente() {
       setMessage('Verificando documentos, planos de ação, trabalhadores e laudos...');
       const issues = await scanDeadlines();
 
-      await Promise.all(issues.map(issue => addDoc(collection(db, 'notifications'), {
+      const existingNotificationKeys = new Set(notifications.map(item => (item as AutomationRecord & { key?: string }).key).filter(Boolean));
+      const newIssues = issues.filter(issue => !existingNotificationKeys.has(issue.key));
+
+      await Promise.all(newIssues.map(issue => addDoc(collection(db, 'notifications'), {
         ...issue,
         targetRole: 'admin',
         userId: 'all',
@@ -252,7 +256,7 @@ export default function AutomacaoInteligente() {
 
       await addDoc(collection(db, 'automationLogs'), {
         title: 'Verificação automática executada',
-        message: `${issues.length} alerta(s) encontrados e ${issues.length} notificação(ões) criadas.`,
+        message: `${issues.length} alerta(s) encontrados e ${newIssues.length} nova(s) notificação(ões) criada(s).`,
         type: issues.length ? 'warning' : 'success',
         status: 'concluido',
         createdAt: serverTimestamp(),
